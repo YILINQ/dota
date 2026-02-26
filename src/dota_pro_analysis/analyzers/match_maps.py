@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..data.models import WardPlacement
-from ..parsers.replay import MAP_SIZE_X, MAP_SIZE_Y
+from ..parsers.replay import MAP_SIZE_X, MAP_SIZE_Y, to_world_coords
 
 # 每路大致的归一化中心 (nx, ny)，用于 lane_pos 近似热力
 # lane: 0=bot, 1=mid, 2=top (radiant 视角)；对 dire 镜像
@@ -39,10 +39,11 @@ def _parse_ward_entry(
     y = entry.get("y") or entry.get("position_y")
     if x is None or y is None:
         return None
+    x, y = to_world_coords(float(x), float(y))
     t = float(entry.get("t") or entry.get("time") or entry.get("game_time") or 0)
     return WardPlacement(
-        x=float(x),
-        y=float(y),
+        x=x,
+        y=y,
         ward_type=ward_type,
         team=team,
         game_time_sec=t,

@@ -12,6 +12,20 @@ from ..data.models import WardPlacement
 MAP_SIZE_X = 17664.0
 MAP_SIZE_Y = 16643.0
 
+# OpenDota 等可能使用格子坐标 0-64 或 0-128
+def to_world_coords(x: float, y: float) -> tuple[float, float]:
+    """若 (x,y) 在 0-200 范围内视为格子坐标，转为世界坐标；否则原样返回。"""
+    m = max(x, y)
+    if m <= 0 or min(x, y) < 0:
+        return x, y
+    if m <= 64:
+        cell = 64.0
+    elif m <= 200:
+        cell = 128.0
+    else:
+        return x, y
+    return (x / cell) * MAP_SIZE_X, (y / cell) * MAP_SIZE_Y
+
 
 def game_to_normalized(x: float, y: float) -> tuple[float, float]:
     """游戏坐标 -> 归一化 [0,1]（左下角原点）。"""
