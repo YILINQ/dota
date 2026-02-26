@@ -77,15 +77,15 @@ def draw_ward_map(
         xs, ys = zip(*pts)
         ax.scatter(xs, ys, c=color, s=point_radius**2, label=label, alpha=0.85, zorder=5, edgecolors="white", linewidths=0.5)
 
-    # 只绘制有数据的类型，图例也只显示有数据的项（避免单人眼位图出现空的 Dire Sentry 等）
+    # 真眼 / 假眼颜色区分更明显：真眼绿/红，假眼蓝/橙
     if obs_radiant:
-        plot_pts(obs_radiant, "#7cb342", "Radiant Observer", "o")
+        plot_pts(obs_radiant, "#2e7d32", "Radiant Observer", "o")
     if obs_dire:
-        plot_pts(obs_dire, "#e53935", "Dire Observer", "o")
+        plot_pts(obs_dire, "#c62828", "Dire Observer", "o")
     if sent_radiant:
-        plot_pts(sent_radiant, "#66bb6a", "Radiant Sentry", "s")
+        plot_pts(sent_radiant, "#1565c0", "Radiant Sentry", "s")
     if sent_dire:
-        plot_pts(sent_dire, "#ef5350", "Dire Sentry", "s")
+        plot_pts(sent_dire, "#ef6c00", "Dire Sentry", "s")
 
     ax.legend(loc="upper left", fontsize=8)
     ax.set_title(title)

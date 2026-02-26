@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -147,15 +148,17 @@ def cmd_match_maps(args: argparse.Namespace) -> int:
     for data in players_data:
         is_radiant = data["is_radiant"]
         slot = data["player_slot"]
-        account_id = data.get("account_id")
+        personaname = (data.get("personaname") or "").strip()
+        name_safe = re.sub(r'[<>:"/\\|?*]', "_", personaname) if personaname else ""
+        name_safe = name_safe.replace(" ", "_")[:32].strip("_") or ""
         if is_radiant:
             idx = slot + 1
             side = "radiant"
         else:
             idx = slot - 128 + 1
             side = "dire"
-        id_suffix = f"_{account_id}" if account_id is not None else ""
-        label = f"{side}_{idx}{id_suffix}"
+        name_suffix = f"_{name_safe}" if name_safe else ""
+        label = f"{side}_{idx}{name_suffix}"
 
         wards = data["wards"]
         wards_path = out_dir / f"{label}_wards.png"
