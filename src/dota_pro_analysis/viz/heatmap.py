@@ -18,7 +18,7 @@ from .map_loader import load_map_image
 def draw_heatmap(
     positions: list[tuple[float, float]],
     output_path: str | Path | None = None,
-    map_size: int = 512,
+    map_size: int = 1440,
     sigma: float = 12.0,
     title: str = "Player Heatmap",
     use_game_coords: bool = True,
@@ -93,7 +93,7 @@ def draw_heatmap(
 def draw_heatmaps_by_slot(
     positions_by_slot: dict[int, list[tuple[float, float]]],
     output_dir: str | Path | None = None,
-    map_size: int = 512,
+    map_size: int = 1440,
     sigma: float = 12.0,
 ) -> list[Path]:
     """为每个 player_slot 生成一张热力图。"""

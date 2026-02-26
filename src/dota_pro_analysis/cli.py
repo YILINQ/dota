@@ -9,7 +9,8 @@ from pathlib import Path
 from . import __version__
 from .api import OpenDotaClient
 from .analyzers import aggregate_draft_stats, parse_draft_from_match
-from .config import load_config
+from .analyzers.match_maps import extract_match_player_maps
+from .config import load_config, get_output_dir
 from .parsers import ReplayParser
 from .viz import draw_ward_map, draw_heatmap, export_draft_stats
 from .viz.map_loader import ensure_map_downloaded
@@ -27,13 +28,34 @@ def cmd_draft(args: argparse.Namespace) -> int:
             league_id = None
 
     client = OpenDotaClient()
-    print("正在获取职业比赛列表...")
-    pro = client.get_pro_matches(limit=limit, league_id=league_id)
-    if not pro:
-        print("未获取到比赛。")
+    match_ids: list[int] = []
+
+    if getattr(args, "match_id", None) is not None:
+        match_ids = [args.match_id]
+        print(f"指定比赛: {args.match_id}")
+    elif getattr(args, "team_id", None) is not None:
+        print(f"正在获取战队 {args.team_id} 的比赛...")
+        team_matches = client.get_team_matches(args.team_id, limit=limit)
+        match_ids = [m["match_id"] for m in team_matches]
+        print(f"获取到 {len(match_ids)} 场")
+    elif getattr(args, "player", None) is not None:
+        print(f"正在获取选手 {args.player} 的比赛...")
+        player_matches = client.get_player_matches(args.player, limit=limit)
+        match_ids = [m["match_id"] for m in player_matches]
+        print(f"获取到 {len(match_ids)} 场")
+    else:
+        print("正在获取职业比赛列表...")
+        pro = client.get_pro_matches(limit=limit, league_id=league_id)
+        if not pro:
+            print("未获取到比赛。")
+            return 1
+        match_ids = [m["match_id"] for m in pro]
+        print(f"获取到 {len(match_ids)} 场")
+
+    if not match_ids:
+        print("没有可用的比赛 ID。")
         return 1
-    match_ids = [m["match_id"] for m in pro]
-    print(f"获取到 {len(match_ids)} 场，正在拉取对局详情...")
+    print("正在拉取对局详情...")
 
     matches = client.get_matches_batch(match_ids)
     drafts = []
@@ -101,9 +123,73 @@ def cmd_heatmap(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_match_maps(args: argparse.Namespace) -> int:
+    """根据 match_id 拉取 OpenDota 数据，输出两队共 10 人的眼位图+热力图（20 张 PNG）到 output/{match_id}/。"""
+    match_id = getattr(args, "match_id", None)
+    if match_id is None:
+        print("请指定 --match-id")
+        return 1
+    out_dir = get_output_dir() / str(match_id)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    client = OpenDotaClient()
+    print(f"正在获取比赛 {match_id} 详情...")
+    try:
+        match = client.get_match(match_id)
+    except Exception as e:
+        print(f"获取失败: {e}")
+        return 1
+    players_data = extract_match_player_maps(match)
+    if len(players_data) != 10:
+        print(f"警告: 仅解析到 {len(players_data)} 名选手，将只生成已有数据对应的图")
+
+    saved: list[Path] = []
+    for data in players_data:
+        is_radiant = data["is_radiant"]
+        slot = data["player_slot"]
+        if is_radiant:
+            idx = slot + 1
+            side = "radiant"
+        else:
+            idx = slot - 128 + 1
+            side = "dire"
+        label = f"{side}_{idx}"
+
+        wards = data["wards"]
+        wards_path = out_dir / f"{label}_wards.png"
+        draw_ward_map(wards, output_path=wards_path, title=f"Wards {label}")
+        saved.append(wards_path)
+
+        positions = data["positions"]
+        heat_path = out_dir / f"{label}_heatmap.png"
+        draw_heatmap(positions, output_path=heat_path, title=f"Heatmap {label}")
+        saved.append(heat_path)
+
+    print(f"已保存 {len(saved)} 张图到: {out_dir.resolve()}")
+    return 0
+
+
+def cmd_list_teams(args: argparse.Namespace) -> int:
+    """列出战队（可按名称搜索），用于查 team_id。"""
+    client = OpenDotaClient()
+    teams = client.get_teams()
+    query = (getattr(args, "search", None) or "").strip().lower()
+    if query:
+        teams = [t for t in teams if query in (t.get("name") or "").lower()]
+    if not teams:
+        print("未找到战队。" if query else "未获取到战队列表。")
+        return 0 if query else 1
+    print("team_id\tname\ttag")
+    for t in teams[:100]:
+        print(f"{t.get('team_id', '')}\t{t.get('name', '')}\t{t.get('tag', '')}")
+    if len(teams) > 100:
+        print(f"... 共 {len(teams)} 支，仅显示前 100")
+    return 0
+
+
 def cmd_download_map(args: argparse.Namespace) -> int:
     """下载 Dota 2 小地图底图到 assets/dota_minimap.png。"""
-    path = ensure_map_downloaded(force=args.force)
+    path = ensure_map_downloaded(force=args.force, resolution=args.resolution)
     if path:
         print(f"地图已保存: {path.resolve()}")
         return 0
@@ -118,6 +204,9 @@ def main() -> int:
 
     # draft
     p_draft = sub.add_parser("draft", help="拉取职业比赛并生成选禁/胜率统计")
+    p_draft.add_argument("--match-id", type=int, default=None, help="指定单场比赛 ID")
+    p_draft.add_argument("--team-id", type=int, default=None, help="指定战队 ID")
+    p_draft.add_argument("--player", type=int, default=None, help="指定选手 account_id")
     p_draft.add_argument("--limit", type=int, default=None, help="比赛场数")
     p_draft.add_argument("--league-id", type=int, default=None, help="联赛 ID 过滤")
     p_draft.add_argument("-o", "--output", type=str, default=None, help="输出 JSON 路径")
@@ -139,7 +228,16 @@ def main() -> int:
 
     p_map = sub.add_parser("download-map", help="下载 Dota 2 地图底图到 assets/")
     p_map.add_argument("--force", action="store_true", help="强制重新下载")
+    p_map.add_argument("--resolution", type=int, default=1440, choices=[1080, 1440], help="分辨率 1440 更清晰")
     p_map.set_defaults(run=cmd_download_map)
+
+    p_teams = sub.add_parser("list-teams", help="列出战队并查 team_id（可选 --search 按名称过滤）")
+    p_teams.add_argument("--search", type=str, default=None, help="按战队名称关键词搜索")
+    p_teams.set_defaults(run=cmd_list_teams)
+
+    p_match_maps = sub.add_parser("match-maps", help="按 match_id 生成两队 10 人眼位图+热力图（20 张 PNG）")
+    p_match_maps.add_argument("--match-id", type=int, required=True, help="比赛 ID")
+    p_match_maps.set_defaults(run=cmd_match_maps)
 
     args = parser.parse_args()
     if not args.command:

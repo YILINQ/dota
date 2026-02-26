@@ -50,7 +50,15 @@ replay_dir: "replays"
 python -m dota_pro_analysis.cli download-map
 ```
 
-会将地图保存到项目目录下的 `assets/dota_minimap.png`。若未下载，生成眼位图/热力图时会自动尝试下载；也可手动将任意 Dota 2 小地图 PNG 放入 `assets/` 并命名为 `dota_minimap.png` 或 `dota_map.png`。
+会将地图保存到项目目录下的 `assets/dota_minimap.png`。默认使用 **1440 高分辨率** 底图，眼位图/热力图输出也为 1440px，更清晰。可选分辨率：
+
+```bash
+python -m dota_pro_analysis.cli download-map --resolution 1440   # 默认，更清晰
+python -m dota_pro_analysis.cli download-map --resolution 1080 # 文件更小
+python -m dota_pro_analysis.cli download-map --force            # 重新下载
+```
+
+当前默认图源为社区资源 [dotaMinimapCovers](https://github.com/KaiSforza/dotaMinimapCovers)（dota700 小地图）。若需与游戏内完全一致的最新地图，可从游戏或 [Liquipedia Commons](https://liquipedia.net/commons/Category:Dota_2_minimap_event_images) 等获取 PNG 后放入 `assets/` 并命名为 `dota_minimap.png`。
 
 ### 1. 选禁统计与胜率（无需录像，仅用 OpenDota API）
 
@@ -60,13 +68,35 @@ python -m dota_pro_analysis.cli download-map
 python -m dota_pro_analysis.cli draft --limit 200 -o output/draft_stats.json
 # 指定联赛（如 TI）
 python -m dota_pro_analysis.cli draft --league-id 15194 -o output/ti_draft.json
+# 指定某一场比赛
+python -m dota_pro_analysis.cli draft --match-id 7123456789 -o output/match.json
+# 指定战队（先查 team_id，见下方「如何找 match_id / team_id / 选手 ID」）
+python -m dota_pro_analysis.cli draft --team-id 8260983 --limit 50 -o output/team_draft.json
+# 指定选手（account_id）
+python -m dota_pro_analysis.cli draft --player 86745912 --limit 100 -o output/player_draft.json
 ```
+
+**如何找 match_id / team_id / 选手 ID**
+
+- **比赛 ID (match_id)**：打开 [OpenDota 某场比赛页](https://www.opendota.com/matches)，URL 里的数字即为 `match_id`；或从 [Stratz](https://stratz.com/)、[Liquipedia](https://liquipedia.net/dota2/) 比赛页链接到 OpenDota 获取。
+- **战队 ID (team_id)**：运行 `python -m dota_pro_analysis.cli list-teams` 列出所有战队；用 `--search 关键词` 按名称搜索，例如 `list-teams --search OG`。表里的 `team_id` 即用于 `--team-id`。
+- **选手 ID (account_id)**：在 [OpenDota 选手页](https://www.opendota.com/players) 搜索或从比赛页点进选手，URL 中的数字即为 `account_id`（Steam 32 位 ID 也可，OpenDota 会识别）。
 
 输出在 `output/draft_stats.json`，包含：
 
 - `total_matches`：场次
 - `heroes`：各英雄的 `pick_count`、`pick_rate`、`ban_count`、`ban_rate`、`wins`、`win_rate`
 - `summary`：选人率/禁用率/胜率排行（至少出场 5 次的英雄参与胜率排行）
+
+### 按比赛生成两队 10 人眼位图+热力图（20 张 PNG）
+
+给定一场比赛的 `match_id`，从 OpenDota 拉取该场详情（需该场已被 OpenDota 解析过），为**两队共 10 名选手**每人生成一张眼位图、一张热力图，共 20 张 PNG，保存在 `output/{match_id}/` 下：
+
+```bash
+python -m dota_pro_analysis.cli match-maps --match-id 7123456789
+```
+
+输出文件命名：`radiant_1_wards.png`, `radiant_1_heatmap.png`, … `radiant_5_*`, `dire_1_*`, … `dire_5_*`。眼位来自 OpenDota 的 `obs_log`/`sen_log`，热力图来自 `lane_pos` 的近似位置（若该场未解析或缺少字段，对应图可能为空）。
 
 ### 2. 眼位图
 

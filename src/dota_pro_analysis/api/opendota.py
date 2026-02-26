@@ -62,3 +62,18 @@ class OpenDotaClient:
             except requests.RequestException:
                 continue
         return results
+
+    def get_teams(self) -> list[dict[str, Any]]:
+        """获取战队列表（含 team_id、name），用于按名称查 team_id。"""
+        data = self._request("/teams")
+        return data if isinstance(data, list) else []
+
+    def get_team_matches(self, team_id: int, limit: int = 100) -> list[dict[str, Any]]:
+        """获取某战队的近期比赛列表。"""
+        data = self._request(f"/teams/{team_id}/matches", params={"limit": limit})
+        return data if isinstance(data, list) else []
+
+    def get_player_matches(self, account_id: int, limit: int = 100) -> list[dict[str, Any]]:
+        """获取某选手的近期比赛列表。"""
+        data = self._request(f"/players/{account_id}/matches", params={"limit": limit})
+        return data if isinstance(data, list) else []

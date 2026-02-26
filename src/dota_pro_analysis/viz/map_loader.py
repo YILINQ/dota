@@ -4,10 +4,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-# 默认地图图片来源（Dota 2 小地图风格，社区资源）
+# 默认使用 1440 高分辨率地图（更清晰）
 DEFAULT_MAP_URL = (
-    "https://raw.githubusercontent.com/KaiSforza/dotaMinimapCovers/master/dota700_minimap_1080_large.png"
+    "https://raw.githubusercontent.com/KaiSforza/dotaMinimapCovers/master/dota700_minimap_1440_large.png"
 )
+MAP_URL_1080 = "https://raw.githubusercontent.com/KaiSforza/dotaMinimapCovers/master/dota700_minimap_1080_large.png"
+MAP_URL_1440 = "https://raw.githubusercontent.com/KaiSforza/dotaMinimapCovers/master/dota700_minimap_1440_large.png"
 
 
 def _project_roots() -> list[Path]:
@@ -32,12 +34,13 @@ def get_map_path() -> Path | None:
     return None
 
 
-def ensure_map_downloaded(force: bool = False) -> Path | None:
+def ensure_map_downloaded(force: bool = False, resolution: int = 1440) -> Path | None:
     """
     若 assets 下没有地图图，则从默认 URL 下载到 assets/dota_minimap.png。
-    force=True 时强制重新下载。
+    force=True 时强制重新下载。resolution: 1080 或 1440（1440 更清晰）。
     成功返回保存路径，失败返回 None。
     """
+    url = MAP_URL_1440 if resolution >= 1440 else MAP_URL_1080
     for root in _project_roots():
         assets = root / "assets"
         dest = assets / "dota_minimap.png"
@@ -46,7 +49,7 @@ def ensure_map_downloaded(force: bool = False) -> Path | None:
         try:
             import urllib.request
             assets.mkdir(parents=True, exist_ok=True)
-            urllib.request.urlretrieve(DEFAULT_MAP_URL, dest)
+            urllib.request.urlretrieve(url, dest)
             if dest.is_file():
                 return dest
         except Exception:

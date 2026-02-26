@@ -18,8 +18,8 @@ from .map_loader import load_map_image
 def draw_ward_map(
     wards: list[WardPlacement],
     output_path: str | Path | None = None,
-    map_size: int = 1024,
-    point_radius: float = 6.0,
+    map_size: int = 1440,
+    point_radius: float = 8.0,
     title: str = "Ward Map (Observer / Sentry)",
 ) -> Path:
     """
