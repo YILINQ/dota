@@ -12,16 +12,26 @@ from ..data.models import WardPlacement
 MAP_SIZE_X = 17664.0
 MAP_SIZE_Y = 16643.0
 
-# OpenDota 等可能使用格子坐标 0-64 或 0-128
+# OpenDota 实际返回的 obs_log/sen_log 为 0~256 左右的格子坐标（见 key "[130,96]"）
 def to_world_coords(x: float, y: float) -> tuple[float, float]:
-    """若 (x,y) 在 0-200 范围内视为格子坐标，转为世界坐标；否则原样返回。"""
-    m = max(x, y)
-    if m <= 0 or min(x, y) < 0:
+    """
+    将 OpenDota / 录像的格子坐标转为世界坐标（左下角原点，0~MAP_SIZE）。
+    - 若 x,y 在 0~300 之间：按 256 格处理（OpenDota 常见）
+    - 若在 0~128 或 0~64：按对应格数处理
+    - 否则视为已是世界坐标，原样返回
+    """
+    x, y = float(x), float(y)
+    if min(x, y) < 0:
         return x, y
+    m = max(x, y)
     if m <= 64:
         cell = 64.0
-    elif m <= 200:
+    elif m <= 128:
         cell = 128.0
+    elif m <= 300:
+        # OpenDota 256 格：minimap 左上角为 (0,0)，需翻转以对应游戏左下角原点
+        cell = 256.0
+        return (1.0 - x / cell) * MAP_SIZE_X, (1.0 - y / cell) * MAP_SIZE_Y
     else:
         return x, y
     return (x / cell) * MAP_SIZE_X, (y / cell) * MAP_SIZE_Y
