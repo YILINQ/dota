@@ -70,6 +70,7 @@ def extract_match_player_maps(match: dict[str, Any]) -> list[dict[str, Any]]:
         player_slot = p.get("player_slot", 0)
         is_radiant = player_slot < 128
         team = "radiant" if is_radiant else "dire"
+        account_id = p.get("account_id")
 
         wards: list[WardPlacement] = []
         for raw in p.get("obs_log") or []:
@@ -103,6 +104,7 @@ def extract_match_player_maps(match: dict[str, Any]) -> list[dict[str, Any]]:
         result.append({
             "player_slot": player_slot,
             "is_radiant": is_radiant,
+            "account_id": account_id,
             "wards": wards,
             "positions": positions,
         })

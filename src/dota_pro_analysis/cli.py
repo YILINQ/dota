@@ -147,13 +147,15 @@ def cmd_match_maps(args: argparse.Namespace) -> int:
     for data in players_data:
         is_radiant = data["is_radiant"]
         slot = data["player_slot"]
+        account_id = data.get("account_id")
         if is_radiant:
             idx = slot + 1
             side = "radiant"
         else:
             idx = slot - 128 + 1
             side = "dire"
-        label = f"{side}_{idx}"
+        id_suffix = f"_{account_id}" if account_id is not None else ""
+        label = f"{side}_{idx}{id_suffix}"
 
         wards = data["wards"]
         wards_path = out_dir / f"{label}_wards.png"
