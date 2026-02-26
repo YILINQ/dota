@@ -1,0 +1,7 @@
+[
+  {"x": 2000, "y": 4000, "ward_type": "observer", "team": "radiant", "game_time": 300},
+  {"x": 5000, "y": 3000, "ward_type": "sentry", "team": "radiant", "game_time": 400},
+  {"x": 12000, "y": 11000, "ward_type": "observer", "team": "dire", "game_time": 350},
+  {"x": 14000, "y": 9000, "ward_type": "sentry", "team": "dire", "game_time": 500},
+  {"x": 8000, "y": 8000, "ward_type": "observer", "team": "radiant", "game_time": 600}
+]

@@ -1,0 +1,24 @@
+# 职业比赛分析工具配置
+
+# OpenDota API（无需 key 也可用，有 key 可提高限额）
+opendota:
+  base_url: "https://api.opendota.com/api"
+  api_key: ""  # 可选，从 https://www.opendota.com/request_api 获取
+  rate_limit_delay: 1.0  # 请求间隔（秒）
+
+# 数据范围
+matches:
+  # 获取最近多少场职业比赛
+  pro_matches_limit: 100
+  # 联赛 ID 过滤（留空则不过滤），例如 15194 = TI
+  league_id: ""
+
+# 输出
+output:
+  dir: "output"
+  ward_map_file: "ward_map.png"
+  heatmap_file: "heatmap_{player_slot}.png"
+  draft_stats_file: "draft_stats.json"
+
+# 本地录像目录（.dem 文件），用于眼位图与热力图解析
+replay_dir: "replays"

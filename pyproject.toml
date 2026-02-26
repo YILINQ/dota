@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dota-pro-analysis"
+version = "0.1.0"
+description = "Parse Dota 2 pro match replays for ward maps, player heatmaps, and draft stats"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "requests>=2.28",
+    "numpy>=1.22",
+    "matplotlib>=3.5",
+    "scipy>=1.9",
+    "pandas>=1.4",
+    "Pillow>=9.0",
+    "PyYAML>=6.0",
+]
+
+[project.scripts]
+dota-pro-analysis = "dota_pro_analysis.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
