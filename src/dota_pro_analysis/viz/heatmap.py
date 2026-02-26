@@ -12,19 +12,7 @@ from scipy.ndimage import gaussian_filter
 
 from ..config import get_output_dir
 from ..parsers.replay import MAP_SIZE_X, MAP_SIZE_Y, game_to_normalized
-
-
-def _load_map_image(size: int = 512) -> np.ndarray | None:
-    for base in [Path(__file__).resolve().parent.parent.parent, Path.cwd()]:
-        for name in ["dota_map.png", "dota_minimap.png", "map.png"]:
-            p = base / "assets" / name
-            if p.is_file():
-                try:
-                    from PIL import Image
-                    return np.array(Image.open(p).resize((size, size)))
-                except Exception:
-                    pass
-    return None
+from .map_loader import load_map_image
 
 
 def draw_heatmap(
@@ -77,9 +65,9 @@ def draw_heatmap(
     ax.set_xlim(0, map_size)
     ax.set_ylim(0, map_size)
 
-    bg = _load_map_image(map_size)
+    bg = load_map_image(map_size)
     if bg is not None:
-        ax.imshow(bg[::-1, :], origin="lower", extent=[0, map_size, 0, map_size], cmap="gray", alpha=0.7)
+        ax.imshow(bg[::-1, :], origin="lower", extent=[0, map_size, 0, map_size], alpha=0.85, zorder=0)
     else:
         ax.set_facecolor("#1a1a2e")
 
@@ -88,8 +76,9 @@ def draw_heatmap(
         origin="lower",
         extent=[0, map_size, 0, map_size],
         cmap="hot",
-        alpha=0.6,
+        alpha=0.55,
         interpolation="bilinear",
+        zorder=1,
     )
     plt.colorbar(im, ax=ax, label="log10(count+1)")
     ax.set_title(title)

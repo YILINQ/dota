@@ -42,6 +42,16 @@ replay_dir: "replays"
 
 ## 使用
 
+### 地图底图（眼位图 / 热力图）
+
+眼位图和热力图会使用 **Dota 2 真实小地图** 作为底图，更直观。首次使用前请先下载地图：
+
+```bash
+python -m dota_pro_analysis.cli download-map
+```
+
+会将地图保存到项目目录下的 `assets/dota_minimap.png`。若未下载，生成眼位图/热力图时会自动尝试下载；也可手动将任意 Dota 2 小地图 PNG 放入 `assets/` 并命名为 `dota_minimap.png` 或 `dota_map.png`。
+
 ### 1. 选禁统计与胜率（无需录像，仅用 OpenDota API）
 
 拉取最近职业比赛并生成英雄选择/禁用率与胜率 JSON：

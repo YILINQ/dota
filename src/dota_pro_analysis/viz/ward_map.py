@@ -12,21 +12,7 @@ import numpy as np
 from ..config import get_output_dir
 from ..data.models import WardPlacement
 from ..parsers.replay import game_to_normalized
-
-
-def _load_map_image(size: int = 1024) -> np.ndarray | None:
-    """加载地图底图；若不存在则返回 None，用纯色代替。"""
-    for base in [Path(__file__).resolve().parent.parent.parent, Path.cwd()]:
-        for name in ["dota_map.png", "dota_minimap.png", "map.png", "minimap.png"]:
-            p = base / "assets" / name
-            if p.is_file():
-                try:
-                    from PIL import Image
-                    img = np.array(Image.open(p).resize((size, size)))
-                    return img
-                except Exception:
-                    pass
-    return None
+from .map_loader import load_map_image
 
 
 def draw_ward_map(
@@ -77,7 +63,7 @@ def draw_ward_map(
     ax.set_xlim(0, map_size)
     ax.set_ylim(0, map_size)
 
-    bg = _load_map_image(map_size)
+    bg = load_map_image(map_size)
     if bg is not None:
         # 图像坐标系 y 向下，我们约定 y 向上（游戏左下角原点）
         ax.imshow(bg[::-1, :], origin="lower", extent=[0, map_size, 0, map_size], zorder=0)

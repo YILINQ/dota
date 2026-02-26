@@ -12,6 +12,7 @@ from .analyzers import aggregate_draft_stats, parse_draft_from_match
 from .config import load_config
 from .parsers import ReplayParser
 from .viz import draw_ward_map, draw_heatmap, export_draft_stats
+from .viz.map_loader import ensure_map_downloaded
 
 
 def cmd_draft(args: argparse.Namespace) -> int:
@@ -100,6 +101,16 @@ def cmd_heatmap(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_download_map(args: argparse.Namespace) -> int:
+    """下载 Dota 2 小地图底图到 assets/dota_minimap.png。"""
+    path = ensure_map_downloaded(force=args.force)
+    if path:
+        print(f"地图已保存: {path.resolve()}")
+        return 0
+    print("下载失败（请检查网络）。也可手动将地图 PNG 放入项目 assets/ 目录，命名为 dota_minimap.png。")
+    return 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Dota 2 职业比赛分析：选禁统计、眼位图、热力图")
     parser.add_argument("--version", action="version", version=__version__)
@@ -125,6 +136,10 @@ def main() -> int:
     p_heat.add_argument("-o", "--output", type=str, default=None, help="输出图片或目录")
     p_heat.add_argument("--title", type=str, default=None, help="图标题")
     p_heat.set_defaults(run=cmd_heatmap)
+
+    p_map = sub.add_parser("download-map", help="下载 Dota 2 地图底图到 assets/")
+    p_map.add_argument("--force", action="store_true", help="强制重新下载")
+    p_map.set_defaults(run=cmd_download_map)
 
     args = parser.parse_args()
     if not args.command:
